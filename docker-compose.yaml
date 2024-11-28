@@ -1,0 +1,16 @@
+services:
+  core:
+    image: cerebrix-core:latest
+    container_name: cerebrix-core
+    build:
+      context: .
+      dockerfile: ./compose/local/Dockerfile
+    command: /start.sh
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./cerebrix:/app
+    env_file:
+      - .env
+    # tty: true
+    # stdin_open: true

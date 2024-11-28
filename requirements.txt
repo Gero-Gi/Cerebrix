@@ -1,0 +1,7 @@
+Django>=5.0
+psycopg2>=2.9
+langchain
+langchain-ollama
+langchain_community 
+langchainhub
+djangorestframework
