@@ -3,6 +3,13 @@ FROM python:3.10-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+# Setup SSH with secure root login, this is for development only
+RUN apt-get update \
+ && apt-get install -y openssh-server netcat-traditional \
+ && mkdir /var/run/sshd \
+ && echo 'root:password' | chpasswd \
+ && sed -i 's/\#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
 # Install system dependencies for PostgreSQL
 RUN apt-get update && apt-get install -y \
     libpq-dev \
