@@ -12,5 +12,6 @@ services:
       - ./cerebrix:/app
     env_file:
       - .env
+    network_mode: host
     # tty: true
     # stdin_open: true

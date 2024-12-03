@@ -1,13 +1,15 @@
 from django.db import models
 
-from .types import LLMTypes
+from .types import LLMTypes, LLM_TYPE_TO_CHAT_MODEL
+from common.models.mixins import TimestampUserModel
 
-class ChatModel(models.Model):
+class ChatModel(TimestampUserModel):
     """
     This represents a LangChain ChatModel [https://python.langchain.com/docs/concepts/chat_models/]. 
     
     """
     name = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     
     # Configuration for the chat model, they will be passed as kwargs to the LangChain ChatModel class
@@ -21,5 +23,16 @@ class ChatModel(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def get_model(self, additional_kwargs={}):
+        """
+        Get the LangChain ChatModel instance for this ChatModel.
+        It handles authentication and other configurations.
+        """
+        return LLM_TYPE_TO_CHAT_MODEL[self.type](**self.config, **additional_kwargs)
+    
+    @property
+    def model(self):
+        return self.get_model()
     
     
