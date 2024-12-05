@@ -1,4 +1,6 @@
 from django.db import models
+from encrypted_json_fields.fields import EncryptedJSONField
+
 
 from .types import LLMTypes, LLM_TYPE_TO_CHAT_MODEL
 from common.models.mixins import TimestampUserModel
@@ -15,10 +17,12 @@ class ChatModel(TimestampUserModel):
     # Configuration for the chat model, they will be passed as kwargs to the LangChain ChatModel class
     config = models.JSONField()
     # Secret configuration for the chat model. Here is where you put your API keys for example.
-    secret_config = models.JSONField()
+    secret_config = EncryptedJSONField()
     
     # The type of the chat model
     type = models.IntegerField(choices=LLMTypes.choices)
+    
+    context_window = models.IntegerField(default=0)
     
     
     def __str__(self):

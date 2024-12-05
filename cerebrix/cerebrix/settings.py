@@ -43,9 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'encrypted_json_fields',
+    'django_json_widget',
         
     'users',
     'aimodels',
+    'threads',
 ]
 
 MIDDLEWARE = [

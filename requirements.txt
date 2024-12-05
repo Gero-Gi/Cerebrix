@@ -6,3 +6,4 @@ langchain_community
 langchainhub
 djangorestframework
 django-encrypted-json-fields==1.0.4
+django-json-widget

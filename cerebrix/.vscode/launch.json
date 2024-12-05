@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Django Shell with File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "manage.py",
+            "args": ["shell", "<", "${file}"],
+            "console": "integratedTerminal",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "cerebrix.settings"
+            },
+            "justMyCode": true
+        }
+    ]
+}
