@@ -7,7 +7,9 @@ class MessageRole(models.TextChoices):
     SYSTEM = "system", "System"
     USER = "user", "User"
     AI = "ai", "Assistant"
-    SUMMARY = "summary", "Summary"
+    # this is a special role used to summarize the thread
+    # when creating the actual message containing the summary, the system message is used
+    SUMMARIZER = "summarizer", "Summarizer"
     
     
 class MessageContentType(models.TextChoices):
@@ -18,10 +20,8 @@ class MessageContentType(models.TextChoices):
     
 class MemoryType(models.TextChoices):
     NONE = "none", "None"
-    HISTORY = "history", "History" # All messages in the thread (context window strategy may be used)
-    SUMMARY = "summary", "Summary" # A summary of the thread plus the latest messages
+    BASIC = "basic", "Basic" # All messages in the thread (context window strategy may be used)
+    SIMPLE = "simple", "Simple" # A summary of the thread plus the latest messages
+    # ADVANCED = "advanced", "Advanced" # Previous strategy, but using a vector store too
+    
 
-# Keys used (commonly) to get the number of tokens of the input from the LLM response metadata
-INPUT_TOKENS_KEYS = ["input_tokens", "prompt_tokens_count", "prompt_tokens"]
-# Keys used (commonly) to get the number of tokens of the output from the LLM response metadata
-OUTPUT_TOKENS_KEYS = ["completion_tokens", "output_tokens", "candidates_token_count"]

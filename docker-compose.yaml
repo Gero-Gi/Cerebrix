@@ -15,3 +15,25 @@ services:
     network_mode: host
     tty: true
     stdin_open: true
+
+  redis:
+    container_name: "c51pgb-redis"
+    image: redis:7-alpine
+    restart: unless-stopped
+    network_mode: host
+    ports:
+      - "6379:6379"
+
+  celery:
+    image: cerebrix-core:latest
+    container_name: cerebrix-celery 
+    command: celery -A cerebrix worker -n worker@cerebrix --loglevel=info
+    volumes:
+      - ./cerebrix:/app
+    env_file:
+      - .env
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      - core
+      - redis

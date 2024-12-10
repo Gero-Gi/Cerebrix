@@ -8,8 +8,8 @@ from .types import DEFAULT_CHAT_MODEL_SYSTEM_MESSAGE, MessageRole
 class ThreadManager(models.Manager):
     def create(self, **kwargs):
         """
-        Override the default create method to add a SystemMessage to the Thread and to 
-        ensure that the ThreadBackend is provided. 
+        Override the default create method to add a SystemMessage to the Thread and to
+        ensure that the ThreadBackend is provided.
         """
 
         backend = kwargs.get("backend", None)
@@ -31,3 +31,11 @@ class ThreadManager(models.Manager):
 
         thread.save()
         return thread
+
+
+class ThreadMessageManager(models.Manager):
+    def create(self, **kwargs):
+        content = kwargs.pop("content", None)
+        content = {"value": content} if content else None
+        kwargs["content"] = content
+        return super().create(**kwargs)

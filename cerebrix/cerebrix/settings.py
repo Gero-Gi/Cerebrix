@@ -137,4 +137,45 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 
-FIELD_ENCRYPTION_KEY = get_env('FIELD_ENCRYPTION_KEY', '')
+EJF_ENCRYPTION_KEYS = get_env('FIELD_ENCRYPTION_KEY', '')
+HUGGING_FACE_TOKEN = get_env('HUGGING_FACE_TOKEN', '')
+
+
+# CELERY SETTINGS
+CELERY_BROKER_URL = get_env("CELERY_BROKER", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = get_env("CELERY_BACKEND", "redis://localhost:6379/0")
+    
+    
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'debug.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': { 
+        'threads': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

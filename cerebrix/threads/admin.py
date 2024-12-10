@@ -8,11 +8,13 @@ from .models import Thread, ThreadMessage, ThreadBackend
 class ThreadMessageInline(admin.TabularInline):
     model = ThreadMessage
     extra = 0
-    readonly_fields = ('created_at',)
-    fields = ('role', 'content_type', 'content', 'tokens', 'created_at')
+    readonly_fields = ('role', 'content_type', 'content_value', 'total_tokens', 'created_at')
+    fields = ('role', 'content_type', 'total_tokens', 'content_tokens', 'created_at')
+    
+   
     
 class ThreadAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'tokens')
+    list_display = ('id', 'name', 'user')
     list_filter = ('user', 'backend')
     inlines = [ThreadMessageInline]
     
@@ -29,7 +31,7 @@ class ThreadInline(admin.TabularInline):
     model = Thread
     extra = 0
     can_delete = False
-    readonly_fields = ('id', 'name', 'user', 'tokens', 'created_at')
+    readonly_fields = ('id', 'name', 'user', 'created_at')
     fields = readonly_fields
     show_change_link = True  # Adds a link to edit the Thread in its own page
     
