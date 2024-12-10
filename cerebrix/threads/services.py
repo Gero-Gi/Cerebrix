@@ -1,11 +1,14 @@
 import logging
+from typing import List, Tuple
 from langchain_core.messages.utils import trim_messages
 
 from .models import Thread, ThreadBackend, ThreadMessage
 from .types import DEFAULT_CHAT_MODEL_SYSTEM_MESSAGE, MessageRole, MessageContentType, MemoryType
 from common.utils import get_input_tokens, get_output_tokens
+from threads.utils.memory import  get_basic_memory, get_simple_memory
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import BaseMessage
 
 logger = logging.getLogger("threads.services")
 
@@ -24,12 +27,15 @@ class ThreadService:
 
     @property
     def memory_size(self):
-        return 100 / self.thread.memory_size * self.chat_model.context_window
+        return self.backend.memory_size_tokens
 
     @property
     def memory_type(self):
         return self.thread.memory_type
     
+    @property
+    def messages(self):
+        return self.thread.messages.order_by("-created_at")
     
     
 
@@ -60,26 +66,13 @@ class ThreadService:
         # return the last messages in the thread, starting from the first human message
         # the number of messages depends on the number of tokens in the messages
         if self.memory_type == MemoryType.BASIC:
-            messages = self.thread.messages.filter(role__in=[MessageRole.USER, MessageRole.AI])
-            tokens = 0
-            history = []
-            for message in messages:
-                tokens += message.content_tokens
-                history.append(message.get_message())
-                if tokens >= self.memory_size and message.role == MessageRole.USER:
-                    break
-            return history, tokens
+            return get_basic_memory(self.thread)
         
-        # return last summary, if available, and messages after the summary
-        # if the context window is too big, start a task to generate another summary
-        # NOTE: the task will be executed in the background, for this reason:
-        #   - the summary is not guaranteed to be up to date
-        #   - to prevent race conditions, if a summary is being generated, 
-        #     the backend.memory_size may not be respected
         elif self.memory_type == MemoryType.SIMPLE:
-            return self.thread.messages.order_by("-created_at")[:self.memory_size]
+            return get_simple_memory(self.thread)
         
         return [], 0
+ 
 
     def send_message(self, message: str):
         # get last system message

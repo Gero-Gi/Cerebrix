@@ -31,6 +31,10 @@ class ThreadBackend(TimestampUserModel):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def memory_size_tokens(self):
+        return self.memory_size / 100 * self.chat_model.context_window
 
 
 class Thread(TimestampModel):
