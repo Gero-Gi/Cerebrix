@@ -10,6 +10,8 @@ from threads.models import Thread
 from threads.models import MessageRole
 
 from threads.tasks import update_memory_summary
+from common.utils.tasks import is_task_running
+
 
 logger = logging.getLogger("threads.utils.memory")
 
@@ -69,8 +71,6 @@ def get_simple_memory(
         last_summary = None
         last_summary_tokens = 0
 
-    logger.debug(f"last_summary_tokens: {last_summary_tokens}")
-    logger.debug(f"last_messages tokens: {last_messages.aggregate(Sum('content_tokens'))['content_tokens__sum'] or 0}")
     total_tokens = (
         last_summary_tokens
         + (last_messages.aggregate(Sum("content_tokens"))["content_tokens__sum"]
@@ -79,24 +79,17 @@ def get_simple_memory(
 
     threshold = thread.backend.memory_size_tokens * threshold / 100
 
-    # if True or total_tokens > thread.backend.memory_size_tokens - threshold:
-    #     logger.debug("Generating summary")
-    #     # TODO: create a new summary asynchronously
-    #     # make sure that a task with the same id is not running, if it is dont run this one
-    #     task_id = f"thread.memory.summary.{thread.id}"
-    #     # check if the task is already running 
-    #     task = current_app.AsyncResult(task_id)
-        
-        
-    #     print('task', task.state)
-    #     if task.state in [states.STARTED]:
-    #         logger.debug("Summary task already running")
-    #     else:
-    #         logger.debug("Generating new summary")
-    #         # update_memory_summary(thread.id, last_messages.last().id)
-    #         update_memory_summary.apply_async(
-    #             args=[thread.id, last_messages.last().id], task_id=task_id
-    #         )
+    if total_tokens > thread.backend.memory_size_tokens - threshold:
+        logger.debug("Generating summary")
+         # make sure that a task with the same id is not running, if it is don't run this one
+        task_id = f"thread.memory.summary.{thread.id}"
+        if is_task_running(task_id):
+            logger.debug("Summary task already running")
+        else:
+            logger.debug("Generating new summary")
+            update_memory_summary.apply_async(
+                args=[thread.id, last_messages.last().id], task_id=task_id
+            )
 
     memory = []
     if last_summary:

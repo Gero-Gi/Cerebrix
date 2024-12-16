@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta
 from time import sleep
- 
+
 from langchain_core.prompts import ChatPromptTemplate
 from threads.models import Thread, ThreadMessage
 from threads.prompts import THREAD_SUMMARY_PROMPT
@@ -9,11 +9,13 @@ from threads.types import MessageRole
 
 from common.utils import get_input_tokens, get_output_tokens
 from common.utils.tasks import locked_task
+from threads.utils import format_message_for_token_count
 
 logger = logging.getLogger("threads.tasks")
- 
 
-def update_memory_summary(thread_id: int, thread_message_id: int):
+
+@locked_task(timeout=300)
+def update_memory_summary(self, thread_id: int, thread_message_id: int):
     """
     Updates the memory summary for a thread by summarizing older messages.
 
@@ -27,7 +29,6 @@ def update_memory_summary(thread_id: int, thread_message_id: int):
         thread_id (int): ID of the thread to update summary for
         thread_message_id (int): ID of the message that triggered the summary update
     """
-    sleep(60)
     logger.debug(f"Updating memory summary for thread {thread_id}")
     thread_message = ThreadMessage.objects.get(id=thread_message_id)
     thread = Thread.objects.get(id=thread_id)
@@ -40,7 +41,7 @@ def update_memory_summary(thread_id: int, thread_message_id: int):
     last_summary = ThreadMessage.objects.filter(
         thread_id=thread_id, role=MessageRole.SUMMARIZER
     ).order_by("-created_at")
-    
+
     if last_summary.exists():
         last_summary = last_summary.first()
         logger.debug(f"Last summary: {last_summary.content_value}")
@@ -97,13 +98,15 @@ def update_memory_summary(thread_id: int, thread_message_id: int):
     using the following summary of past messages as context:
     {resp.content}
     """
-
+ 
     # add the new summary a millisecond after the last summarized message
     ThreadMessage.objects.create(
         thread_id=thread_id,
         created_at=to_summarize_qs.last().created_at + timedelta(milliseconds=1),
         content=summary,
         total_tokens=spent_tokens,  # this is the total number of tokens spent to generate the summary
-        content_tokens=thread.backend.chat_model.count_tokens(summary),
+        content_tokens=thread.backend.chat_model.count_tokens(
+            format_message_for_token_count(summary, MessageRole.SUMMARIZER)
+        ),
         role=MessageRole.SUMMARIZER,
     )
