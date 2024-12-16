@@ -168,10 +168,15 @@ AUTH_USER_MODEL = 'users.User'
 EJF_ENCRYPTION_KEYS = get_env('FIELD_ENCRYPTION_KEY', '')
 HUGGING_FACE_TOKEN = get_env('HUGGING_FACE_TOKEN', '')
 
+# REDIS Configuration
+REDIS_HOST = get_env('REDIS_HOST', 'localhost')
+REDIS_PORT = get_env('REDIS_PORT', 6379)
+REDIS_DB = get_env('REDIS_DB', 0)
+
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

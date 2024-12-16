@@ -8,15 +8,10 @@ from threads.prompts import THREAD_SUMMARY_PROMPT
 from threads.types import MessageRole
 
 from common.utils import get_input_tokens, get_output_tokens
-
+from common.utils.tasks import locked_task
 
 logger = logging.getLogger("threads.tasks")
-
-def test_task():
-    import time
-    print('test_task')
-    for i in range(10):
-        time.sleep(1)
+ 
 
 def update_memory_summary(thread_id: int, thread_message_id: int):
     """
