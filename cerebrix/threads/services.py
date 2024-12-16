@@ -6,7 +6,7 @@ from .models import Thread, ThreadBackend, ThreadMessage
 from .types import DEFAULT_CHAT_MODEL_SYSTEM_MESSAGE, MessageRole, MessageContentType, MemoryType
 from common.utils import get_input_tokens, get_output_tokens
 from threads.utils.memory import  get_basic_memory, get_simple_memory
-
+from threads.exceptions import TokenLimitExceededError
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import BaseMessage
 
@@ -31,7 +31,7 @@ class ThreadService:
 
     @property
     def memory_type(self):
-        return self.thread.memory_type
+        return self.thread.backend.memory_type
     
     @property
     def messages(self):
@@ -62,7 +62,7 @@ class ThreadService:
         )
         
         
-    def get_memory(self):
+    def get_memory(self) -> Tuple[List[ThreadMessage], int]:
         # return the last messages in the thread, starting from the first human message
         # the number of messages depends on the number of tokens in the messages
         if self.memory_type == MemoryType.BASIC:
@@ -82,25 +82,31 @@ class ThreadService:
             .first()
         )
 
+        memory, memory_tokens = self.get_memory()
         chat_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", last_system_message.content_value),
+                MessagesPlaceholder(variable_name="memory"),
                 ("human", "{input}"),
             ]
         )
-        runnable = chat_prompt | self.thread.backend.chat_model.get_model(max_tokens=20)
+        runnable = chat_prompt | self.thread.backend.chat_model.get_model()
         try:
+            # check if the message + memory is too long to be sent to the model
+            tokens_to_send = self.backend.chat_model.count_tokens(message) + memory_tokens
+            if tokens_to_send > self.backend.chat_model.context_window:
+                raise TokenLimitExceededError()
+            
             # send the message to the model
-            resp = runnable.invoke({"input": message}, max_tokens='200')
+            resp = runnable.invoke({"input": message, "memory": memory}, max_tokens=tokens_to_send)
 
             ThreadMessage.objects.create(
                 thread=self.thread,
-                role=MessageRole.USER,
+                role=MessageRole.HUMAN,
                 content=message,
                 content_type=MessageContentType.TEXT,
-                total_tokens=get_input_tokens(
-                    resp
-                ),  # these are the actual tokens sent to the model
+                # these are the actual tokens sent to the model
+                total_tokens=get_input_tokens(resp),  
                 content_tokens=self.thread.backend.chat_model.count_tokens(message),
             )
 

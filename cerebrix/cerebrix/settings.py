@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     
     'encrypted_json_fields',
     'django_json_widget',
-        
+         
     'users',
     'aimodels',
     'threads',
@@ -91,6 +91,34 @@ DATABASES = {
     }
 }
 
+
+# settings.py example
+Q_CLUSTER = {
+    'name': 'cerebrix',
+    # 'workers': 8,
+    'recycle': 500,
+    'timeout': 60,
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'cpu_affinity': 1,
+    'label': 'Django Q2',
+    'redis': {
+        'host': '127.0.0.1',
+        'port': 6379,
+        'db': 0, },
+    'ALT_CLUSTERS': {
+        'long': {
+            'timeout': 3000,
+            'retry': 3600,
+            'max_attempts': 2,
+        },
+        'short': {
+            'timeout': 10,
+            'max_attempts': 1,
+        },
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -141,11 +169,17 @@ EJF_ENCRYPTION_KEYS = get_env('FIELD_ENCRYPTION_KEY', '')
 HUGGING_FACE_TOKEN = get_env('HUGGING_FACE_TOKEN', '')
 
 
-# CELERY SETTINGS
-CELERY_BROKER_URL = get_env("CELERY_BROKER", "redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = get_env("CELERY_BACKEND", "redis://localhost:6379/0")
-    
-    
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = get_env('CELERY_TASK_TIME_LIMIT', 30 * 60)  # 30 minutes
+
+ 
 
 LOGGING = {
     'version': 1,

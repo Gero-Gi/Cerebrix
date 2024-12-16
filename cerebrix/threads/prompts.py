@@ -31,6 +31,8 @@ Provide a summary in the following format:
 Key Points Discussed: [Highlight key topics and progress in the conversation.]
 Tone and Interaction: [Describe the tone, e.g., friendly, professional, or inquisitive.]
 Unresolved Questions or Actions: [Mention any pending items or next steps.]
+
+Don't include any other text in your response.
 """
 
 

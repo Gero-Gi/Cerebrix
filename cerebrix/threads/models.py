@@ -125,7 +125,7 @@ class ThreadMessage(TimestampModel):
         self.content = {"value": value}
         
     def get_message(self):
-        if self.role == MessageRole.USER:
+        if self.role == MessageRole.HUMAN:
             return HumanMessage(content=self.content_value, content_tokens=self.content_tokens)
         elif self.role == MessageRole.AI:
             return AIMessage(content=self.content_value, content_tokens=self.content_tokens)

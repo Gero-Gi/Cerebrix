@@ -8,10 +8,12 @@ from .models import Thread, ThreadMessage, ThreadBackend
 class ThreadMessageInline(admin.TabularInline):
     model = ThreadMessage
     extra = 0
-    readonly_fields = ('role', 'content_type', 'content_value', 'total_tokens', 'created_at')
-    fields = ('role', 'content_type', 'total_tokens', 'content_tokens', 'created_at')
+    readonly_fields = ('role', 'content_type', 'get_content_value', 'total_tokens', 'created_at')
+    fields = ('role', 'content_type', 'get_content_value', 'total_tokens', 'content_tokens', 'created_at')
     
-   
+    def get_content_value(self, obj):
+        return obj.content.get('value') if obj.content else None
+    get_content_value.short_description = 'Content'
     
 class ThreadAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'user')

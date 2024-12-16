@@ -7,27 +7,29 @@ services:
       dockerfile: ./compose/local/Dockerfile
     command: /start.sh
     ports:
-      - "8080:8080"
+      - "8000:8000"
     volumes:
       - ./cerebrix:/app
     env_file:
       - .env
-    network_mode: host
     tty: true
     stdin_open: true
+    depends_on:
+      - redis
+    network_mode: host
 
   redis:
     container_name: "c51pgb-redis"
     image: redis:7-alpine
     restart: unless-stopped
-    network_mode: host
     ports:
       - "6379:6379"
+    network_mode: host
 
-  celery:
+  worker:
     image: cerebrix-core:latest
-    container_name: cerebrix-celery 
-    command: celery -A cerebrix worker -n worker@cerebrix --loglevel=info
+    container_name: cerebrix-worker 
+    command: celery -A cerebrix worker -l INFO
     volumes:
       - ./cerebrix:/app
     env_file:

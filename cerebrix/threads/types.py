@@ -5,7 +5,7 @@ DEFAULT_CHAT_MODEL_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 class MessageRole(models.TextChoices):
     SYSTEM = "system", "System"
-    USER = "user", "User"
+    HUMAN = "human", "Human"
     AI = "ai", "Assistant"
     # this is a special role used to summarize the thread
     # when creating the actual message containing the summary, the system message is used
