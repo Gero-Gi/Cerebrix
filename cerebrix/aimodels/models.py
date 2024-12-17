@@ -6,7 +6,13 @@ from transformers import AutoTokenizer
 import tiktoken
 
 
-from .types import LLMTypes, LLM_TYPE_TO_CHAT_MODEL, LLM_TYPE_TO_LLM
+from .types import (
+    LLMTypes,
+    LLM_TYPE_TO_CHAT_MODEL,
+    LLM_TYPE_TO_LLM,
+    EmbeddingModelTypes,
+    EMBEDDING_MODEL_TYPE_TO_EMBEDDING_MODEL,
+)
 from common.models.mixins import TimestampUserModel
 from users.models import User
 
@@ -55,7 +61,7 @@ class LanguageModel(TimestampUserModel):
     @property
     def model(self):
         return self.get_model()
-    
+
     @property
     def chat_model(self):
         return self.get_chat_model()
@@ -95,4 +101,37 @@ class LanguageModel(TimestampUserModel):
             self._gpt_tokenizer(input)
             if self.type == LLMTypes.OPENAI
             else self._auto_tokenizer(input)
+        )
+
+
+class EmbeddingModel(TimestampUserModel):
+    """
+    This represents a LangChain EmbeddingModel [https://python.langchain.com/docs/concepts/embedding_models/].
+    """
+
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    # Configuration for the embedding model, they will be passed as kwargs to the LangChain EmbeddingModel class
+    config = models.JSONField()
+    # Secret configuration for the embedding model. Here is where you put your API keys for example.
+    secret_config = EncryptedJSONField(blank=True, null=True)
+
+    # The type of the embedding model
+    type = models.IntegerField(choices=EmbeddingModelTypes.choices)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def model(self):
+        return self.get_model()
+
+    def get_model(self, **kwargs):
+        """
+        Get the LangChain EmbeddingModel instance for this EmbeddingModel.
+        """
+        return EMBEDDING_MODEL_TYPE_TO_EMBEDDING_MODEL[self.type](
+            **self.config, **kwargs
         )
