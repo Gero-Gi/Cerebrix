@@ -53,8 +53,6 @@ class Thread(TimestampModel):
 
     name = models.CharField(max_length=255, blank=True, null=True)
 
-    # Summary of the messages in the thread. It's used when the memory type is set to SUMMARY
-    summary = models.TextField(blank=True, null=True)
 
     objects = ThreadManager()
 
