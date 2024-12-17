@@ -2,10 +2,10 @@ from django.contrib import admin
 from django.db.models import JSONField
 from django_json_widget.widgets import JSONEditorWidget
 
-from .models import ChatModel
+from .models import LanguageModel
 
-@admin.register(ChatModel)
-class ChatModelAdmin(admin.ModelAdmin):
+@admin.register(LanguageModel)
+class LanguageModelAdmin(admin.ModelAdmin):
     list_display = ["name", "type"] 
     list_filter = ["type"]
     search_fields = ["name"]

@@ -74,7 +74,7 @@ def update_memory_summary(self, thread_id: int, thread_message_id: int):
             ("human", THREAD_SUMMARY_PROMPT),
         ]
     )
-    chain = chat_prompt | thread.backend.chat_model.get_model()
+    chain = chat_prompt | thread.backend.chat_model.get_chat_model()
     # logger.debug(chat_prompt.format_messages(messages=to_summarize, previous_summary=last_summary.content_value if last_summary else None))
     try:
         resp = chain.invoke(

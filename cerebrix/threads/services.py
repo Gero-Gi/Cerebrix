@@ -95,7 +95,7 @@ class ThreadService:
             ]
         )
         print(chat_prompt.format(input=message, memory=memory))
-        runnable = chat_prompt | self.thread.backend.chat_model.get_model()
+        runnable = chat_prompt | self.thread.backend.chat_model.get_chat_model()
 
         message_tokens = self.thread.backend.chat_model.count_tokens(
             format_message_for_token_count(message, MessageRole.HUMAN)

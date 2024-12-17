@@ -15,7 +15,7 @@ class ThreadBackend(TimestampUserModel):
 
     name = models.CharField(max_length=255)
     chat_model = models.ForeignKey(
-        "aimodels.ChatModel", on_delete=models.SET_NULL, null=True
+        "aimodels.LanguageModel", on_delete=models.SET_NULL, null=True
     )
 
     # System message that defines the AI assistant's behavior for all threads using this backend

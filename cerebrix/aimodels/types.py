@@ -1,6 +1,6 @@
 from django.db import models
 
-from langchain_ollama import ChatOllama
+from langchain_ollama import ChatOllama, OllamaLLM
 # from langchain_openai import ChatOpenAI
 from langchain_core.language_models.fake_chat_models import FakeChatModel
 
@@ -16,4 +16,9 @@ class LLMTypes(models.IntegerChoices):
 LLM_TYPE_TO_CHAT_MODEL = {
     # LLMTypes.OPENAI: ChatOpenAI,
     LLMTypes.OLLAMA: ChatOllama,
+}
+
+# Mapping between the types and the corresponding LangChain LLM class
+LLM_TYPE_TO_LLM = {
+    LLMTypes.OLLAMA: OllamaLLM,
 }

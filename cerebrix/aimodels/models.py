@@ -6,15 +6,16 @@ from transformers import AutoTokenizer
 import tiktoken
 
 
-from .types import LLMTypes, LLM_TYPE_TO_CHAT_MODEL
+from .types import LLMTypes, LLM_TYPE_TO_CHAT_MODEL, LLM_TYPE_TO_LLM
 from common.models.mixins import TimestampUserModel
 from users.models import User
 
 
-class ChatModel(TimestampUserModel):
+class LanguageModel(TimestampUserModel):
     """
-    This represents a LangChain ChatModel [https://python.langchain.com/docs/concepts/chat_models/].
+    This represents a LangChain LanguageModel [https://python.langchain.com/docs/concepts/language_models/].
 
+    From this model both ChatModel and LLM can be derived.
     """
 
     name = models.CharField(max_length=255)
@@ -37,16 +38,27 @@ class ChatModel(TimestampUserModel):
     def __str__(self):
         return self.name
 
-    def get_model(self, **kwargs):
+    def get_chat_model(self, **kwargs):
         """
         Get the LangChain ChatModel instance for this ChatModel.
         It handles authentication and other configurations.
         """
         return LLM_TYPE_TO_CHAT_MODEL[self.type](**self.config, **kwargs)
 
+    def get_model(self, **kwargs):
+        """
+        Get the LangChain LLM instance for this LanguageModel.
+        It handles authentication and other configurations.
+        """
+        return LLM_TYPE_TO_LLM[self.type](**self.config, **kwargs)
+
     @property
     def model(self):
         return self.get_model()
+    
+    @property
+    def chat_model(self):
+        return self.get_chat_model()
 
     def invoke(self, user: User, *args, **kwargs):
         """
