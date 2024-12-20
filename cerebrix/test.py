@@ -1,4 +1,4 @@
-from aimodels.models import ChatModel
+from aimodels.models import LanguageModel
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -64,74 +64,40 @@ from langchain_core.messages.utils import trim_messages
 #     ** conversation **
 #     {memory}
 #     """
-#     print('Getting random message')
+#     # print('Getting random message')
 #     resp = service.thread.backend.chat_model.model
 #     resp = resp.invoke(prompt)
 
-#     print('Generated message:')
-#     print(pformat(resp.content))
-#     print('\n\n')
+#     # print('Generated message:')
+#     # print(pformat(resp.content))
+#     # print('\n\n')
 #     try:
 #         resp = service.send_message(resp.content)
-#         print('Response:')
-#         print(pformat(resp.content_value))
+#         exit()
+#         # print('Response:')
+#         # print(pformat(resp.content_value))
 #     except Exception as e:
 #         raise e
 #         print(e)
+ 
+from aimodels.models import EmbeddingModel
+from pydantic import BaseModel, Field
+# embedding_model = EmbeddingModel.objects.get(code="ollama_llama3.1")
+
+# print(embedding_model.model.embed_query(""))
 
 
-import time
-from django_q.tasks import async_task, result, fetch
-from django_q.models import Task
-from django_q.brokers import get_broker
-from django_q.conf import Conf
 
-
-from threads.tasks import test_task
-
-def is_task_running(task_name):
-    broker = get_broker()
-    redis_conn = broker.get_connection()
+class QdrantConfig(BaseModel):
+    host: str | None = None
+    port: int = Field(..., gt=0, lt=65536)  # Valid port range
+    dimension: int = Field(..., gt=0)
+    collection_name: str = Field(..., min_length=1)
     
-    # Django Q2 uses this pattern for task name locks
-    key = f'django_q:lock:{task_name}'
-    
-    # Check if the lock exists
-    return redis_conn.exists(key) > 0
+test = {"port": 6333, "dimension": 1536, "collection_name": "test"}
 
-def run_unique_task(task_name, func, *args, **kwargs):
-    if is_task_running(task_name):
-        return False, "Task already running"
-    
-    # Start the task with uniqueness enforcement
-    return async_task(func, 
-                     *args, 
-                     task_name=task_name,
-                     q_options={'task_name_unique': True},
-                     **kwargs)
-
-# Main loop
-task_name = 'test-1'
-while True:
-    if is_task_running(task_name):
-        print('Task is running')
-    else:
-        print('Task is not running')
-        task_id = async_task(test_task)
-        task = fetch(task_id)
-        print(task)
-        print(f'Started task with ID: {task_id}')
-    time.sleep(2)
-
-
-from django_q.brokers import get_broker
-
-# def clear_queue():
-#     broker = get_broker()
-#     redis_conn = broker.get_connection()
-    
-#     # Clear all Django Q related keys
-#     for key in redis_conn.scan_iter("django_q:*"):
-#         redis_conn.delete(key)
-        
-# clear_queue()
+try:
+    validated = QdrantConfig.model_validate(test)
+    print(validated)
+except Exception as e:
+    print(e)

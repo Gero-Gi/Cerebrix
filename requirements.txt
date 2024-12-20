@@ -11,3 +11,4 @@ transformers
 tiktoken
 redis
 celery
+qdrant-client

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'users',
     'aimodels',
     'threads',
+    'vector_stores',
 ]
 
 MIDDLEWARE = [

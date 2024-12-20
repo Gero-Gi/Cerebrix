@@ -1,10 +1,12 @@
 from django.db import models
 from django.conf import settings
 from encrypted_json_fields.fields import EncryptedJSONField
+import logging
 
 from transformers import AutoTokenizer
 import tiktoken
 
+logger = logging.getLogger(__name__)
 
 from .types import (
     LLMTypes,
@@ -29,9 +31,8 @@ class LanguageModel(TimestampUserModel):
     description = models.TextField(blank=True, null=True)
 
     # Configuration for the chat model, they will be passed as kwargs to the LangChain ChatModel class
-    config = models.JSONField()
-    # Secret configuration for the chat model. Here is where you put your API keys for example.
-    secret_config = EncryptedJSONField()
+    config = EncryptedJSONField()
+
 
     # The type of the chat model
     type = models.IntegerField(choices=LLMTypes.choices)
@@ -114,12 +115,13 @@ class EmbeddingModel(TimestampUserModel):
     description = models.TextField(blank=True, null=True)
 
     # Configuration for the embedding model, they will be passed as kwargs to the LangChain EmbeddingModel class
-    config = models.JSONField()
-    # Secret configuration for the embedding model. Here is where you put your API keys for example.
-    secret_config = EncryptedJSONField(blank=True, null=True)
+    config = EncryptedJSONField(blank=True, null=True)
 
     # The type of the embedding model
     type = models.IntegerField(choices=EmbeddingModelTypes.choices)
+    
+    # The size of the embedding model. This is used to set the dimension of the vectors in the vector store.
+    size = models.IntegerField(null=True, blank=True, default=None)
 
     def __str__(self):
         return self.name
@@ -135,3 +137,14 @@ class EmbeddingModel(TimestampUserModel):
         return EMBEDDING_MODEL_TYPE_TO_EMBEDDING_MODEL[self.type](
             **self.config, **kwargs
         )
+        
+    def set_size(self):
+        self.size = len(self.get_model().embed_query('test'))
+    
+    def save(self, *args, **kwargs):
+        if self.size is None:
+            try:
+                self.set_size()
+            except Exception as e:
+                logger.error(f"An error occurred while getting the size of the embedding model: {e}. The model will not work as expected.")
+        super().save(*args, **kwargs)
