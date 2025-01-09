@@ -1,6 +1,9 @@
 import logging
 
+from langchain_core.documents import Document as LangchainDocument
+
 from vector_stores.exceptions import VectorStoreValidationError
+from vector_stores.models import VectorStore
 
 from pydantic import ValidationError
 
@@ -13,14 +16,14 @@ class BaseVectorDbClient:
     """
     config_schema = None
     
-    def __init__(self, backend: "VectorStoreBackend"):
+    def __init__(self, backend):
         self.backend = backend
         self.config = backend.config
         self.validate_config(self.config)
 
     def create_store(self, store: "VectorStore"):
         pass
-
+ 
     def update_store(self, store: "VectorStore"):
         pass
     
@@ -28,6 +31,17 @@ class BaseVectorDbClient:
         pass
     
     def store_exists(self, store: "VectorStore"):
+        pass
+    
+    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None):
+        """
+        Store a list of documents in the vector database.
+
+        Args:
+            store: The vector store to store the documents in
+            documents: A list of LangchainDocument objects to store in the vector database
+            payloads: A list of strings to associate with the embeddings instead of the document page_content.
+        """
         pass
     
     @classmethod

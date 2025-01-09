@@ -1,10 +1,13 @@
 import logging
 
 from pydantic import BaseModel, Field, field_validator, ValidationError
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 from qdrant_client.http.models import Distance
+from langchain_core.documents import Document as LangchainDocument
+from langchain_qdrant import QdrantVectorStore
 
 from vector_stores.exceptions import VectorStoreValidationError
+from vector_stores.models import VectorStore, VectorStoreBackend
 from vector_stores.types import VectorStoreMetrics
 from .base import BaseVectorDbClient
 
@@ -59,3 +62,28 @@ class CerebrixQdrantClient(BaseVectorDbClient):
     
     def delete_store(self, store: "VectorStore"):
         self.client.delete_collection(store.code)
+
+    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None):
+        qdrant_store = QdrantVectorStore(
+            client=self.client,
+            collection_name=store.code,
+            embedding=store.get_embedding_model().model
+        )
+        ids = qdrant_store.add_documents(documents)
+        if payloads:
+            update_operations = [
+                models.PointStruct(
+                    id=id,
+                    payload={"page_content": payloads[index]},
+                    update_operations=models.UpdateOperations(
+                        set_payload={"page_content": payloads[index]}
+                    )
+                )
+                for index, id in enumerate(ids)
+            ]
+            self.client.batch_update_points(
+                collection_name=store.code,
+                update_operations=update_operations
+            )
+        return ids
+            

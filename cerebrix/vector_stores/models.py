@@ -2,9 +2,8 @@ from django.db import models
 from common.models.mixins import TimestampUserModel, TimestampModel
 from encrypted_json_fields.fields import EncryptedJSONField
 
-from vector_stores.utils.db_clients import BaseVectorDbClient
+
 from .types import VectorStoreTypes, VectorStoreMetrics
-from vector_stores.utils.db_clients import STORE_CLIENT_MAP
 from aimodels.models import EmbeddingModel
 from vector_stores.exceptions import VectorStoreStoreError
 
@@ -28,7 +27,8 @@ class VectorStoreBackend(TimestampUserModel):
     )
 
     @property
-    def db_client(self) -> BaseVectorDbClient:
+    def db_client(self):
+        from vector_stores.utils.db_clients import STORE_CLIENT_MAP
         return STORE_CLIENT_MAP[self.type](self)
 
     def __str__(self):
@@ -104,15 +104,49 @@ class VectorStore(TimestampUserModel):
                     "There was an error while interacting with the vector store backend: {e}"
                 )
         super().delete(*args, **kwargs)
+
+
+class Document(TimestampModel):
+    """
+    This model represents a File uploaded by the user.
+    """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to="documents/")
+
+    user = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, null=True, blank=True, default=None
+    )
+    
+    public = models.BooleanField(default=False)
+    
+    # hash of the preprocessed file content (XXH64)
+    hash = models.CharField(max_length=16, null=True, blank=True, default=None)
+    
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.file.name
+        super().save(*args, **kwargs)
+  
         
-        
+
+
 class VectorDocument(TimestampModel):
     """
     This model represents a File that has been embedded and stored in a Vector Store.
     """
-    
+
     store = models.ForeignKey("vector_stores.VectorStore", on_delete=models.CASCADE)
 
-    file = models.FileField(upload_to="vector_documents/")
+    # documents loaded from different users but with the same hash
+    documents = models.ManyToManyField("vector_stores.Document", related_name="vector_documents")
     
+    hash = models.CharField(max_length=16, null=True, blank=True, default=None)
+    
+    def __str__(self):
+        return f"{self.store.name} - {self.hash}"
     

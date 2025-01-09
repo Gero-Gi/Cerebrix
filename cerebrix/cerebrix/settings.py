@@ -185,6 +185,14 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = get_env('CELERY_TASK_TIME_LIMIT', 30 * 60)  # 30 minutes
 
+# Media files (user uploaded content)
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configure Django's default file storage
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+
  
 
 LOGGING = {

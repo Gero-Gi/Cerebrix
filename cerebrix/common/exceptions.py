@@ -9,4 +9,4 @@ class CerebrixError(Exception):
         self.http_status = http_status or self.http_status
 
     def get_full_details(self):
-        return {"message": self.detail, "code": self.code}
+        return {"message": self.message, "code": self.code}

@@ -4,17 +4,27 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Setup SSH with secure root login, this is for development only
-RUN apt-get update \
- && apt-get install -y openssh-server netcat-traditional \
+RUN apt-get update 
+RUN apt-get install -y openssh-server netcat-traditional \
  && mkdir /var/run/sshd \
  && echo 'root:password' | chpasswd \
  && sed -i 's/\#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 # Install system dependencies for PostgreSQL
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y \
     libpq-dev \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+    gcc 
+
+# install system dependencies for unstructured
+RUN apt-get install -y \
+    libmagic-dev \
+    poppler-utils \
+    tesseract-ocr \
+    qpdf \
+    libreoffice \
+    pandoc
+ 
+RUN rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
 COPY ./requirements.txt /requirements.txt
