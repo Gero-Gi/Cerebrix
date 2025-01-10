@@ -39,6 +39,52 @@ class EmbeddingModelTypes(models.IntegerChoices):
     MISTRAL = 3, "Mistral"
     FAKE = 99, "Fake" # used for testing
 
+
+#region TEMPORARY FIX FOR MISTRAL AI
+# Inside the @retry decorator, the wrong type is caught.
+# This is a temporary fix to ensure that the MistralAIEmbeddings class works as expected.
+import httpx
+from typing import List
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_fixed
+class MistralAIEmbeddings(MistralAIEmbeddings):
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embed a list of document texts.
+
+        Args:
+            texts: The list of texts to embed.
+
+        Returns:
+            List of embeddings, one for each text.
+        """
+        try:
+            batch_responses = []
+
+            @retry(
+                retry=retry_if_exception_type(httpx.HTTPStatusError),
+                wait=wait_fixed(self.wait_time),
+                stop=stop_after_attempt(self.max_retries),
+            )
+            def _embed_batch(batch: List[str]):
+                response = self.client.post(
+                    url="/embeddings",
+                    json=dict(
+                        model=self.model,
+                        input=batch,
+                    ),
+                )
+                response.raise_for_status()
+                return response
+
+            for batch in self._get_batches(texts):
+                batch_responses.append(_embed_batch(batch))
+            return [
+                list(map(float, embedding_obj["embedding"]))
+                for response in batch_responses
+                for embedding_obj in response.json()["data"]
+            ]
+        except Exception as e:
+            raise
+#endregion
 # mapping between the types and the corresponding LangChain EmbeddingModel class
 EMBEDDING_MODEL_TYPE_TO_EMBEDDING_MODEL = {
     # EmbeddingModelTypes.OPENAI: OpenAIEmbeddings,
