@@ -33,15 +33,18 @@ class BaseVectorDbClient:
     def store_exists(self, store: "VectorStore"):
         pass
     
-    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None):
+    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None) -> list[str]:
         """
-        Store a list of documents in the vector database.
+        Store a list of documents in the vector database and return the ids of the created vectors.
 
         Args:
             store: The vector store to store the documents in
             documents: A list of LangchainDocument objects to store in the vector database
             payloads: A list of strings to associate with the embeddings instead of the document page_content.
         """
+        pass
+    
+    def delete_documents(self, store: "VectorStore", ids: list[str]):
         pass
     
     @classmethod

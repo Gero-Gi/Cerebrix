@@ -163,7 +163,7 @@ class DocumentLoader:
         """
         pass
     
-    def embed_chunks(self, chunks: list[LangchainDocument], texts: list[str] = None) -> list[LangchainDocument]:
+    def embed_chunks(self, chunks: list[LangchainDocument], texts: list[str] = None) -> list[str]:
         """
         Embeds a list of document chunks into vector representations.
 
@@ -180,7 +180,7 @@ class DocumentLoader:
             A list of LangchainDocument objects with embeddings added
         """
         logger.info(f"Embedding {len(chunks)} documents into vector store {self.vector_store.name}")
-        self.vector_store.backend.db_client.store_documents(self.vector_store, chunks, texts)
+        return self.vector_store.backend.db_client.store_documents(self.vector_store, chunks, texts)
 
     def load_on_vector_store(self) -> VectorDocument:
         """
@@ -199,7 +199,9 @@ class DocumentLoader:
         }
         try:
             chunks = self.get_chunks(extra_metadata)
-            self.embed_chunks(chunks)
+            embedding_ids = self.embed_chunks(chunks)
+            vector_document.embedding_ids = embedding_ids
+            vector_document.save()
         except Exception as e:
             logger.error(f"Error embedding document {self.file_path} in vector store {self.vector_store.name}: {e}")
             vector_document.delete()
@@ -250,15 +252,7 @@ class PDFDocumentLoader(DocumentLoader):
         
         for chunk in self.chunks:
             raw += process_element(chunk)
-            
-        # Write raw content to txt file for debugging/inspection
-        import os
-        
-        output_dir = "tmp"
-        os.makedirs(output_dir, exist_ok=True)
-        
-        with open(os.path.join(output_dir, "raw_content.txt"), "w", encoding="utf-8") as f:
-            f.write(raw)
+     
         return raw
     
     def get_chunks(self, extra_metadata: dict = {}) -> list[LangchainDocument]:
@@ -297,22 +291,5 @@ class PDFDocumentLoader(DocumentLoader):
             }
             metadata.update(extra_metadata)
             docs.append(LangchainDocument(page_content=content, metadata=metadata))
-            
-        # Write document chunks to JSON file for debugging/inspection
-        import json
-        import os
-        
-        output_dir = "tmp"
-        os.makedirs(output_dir, exist_ok=True)
-        
-        json_data = []
-        for doc in docs:
-            json_data.append({
-                "content": doc.page_content,
-                "metadata": doc.metadata
-            })
-            
-        with open(os.path.join(output_dir, "documents.json"), "w", encoding="utf-8") as f:
-            json.dump(json_data, f, indent=4, ensure_ascii=False)
             
         return docs

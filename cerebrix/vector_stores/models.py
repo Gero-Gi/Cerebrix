@@ -1,6 +1,7 @@
 from django.db import models
 from common.models.mixins import TimestampUserModel, TimestampModel
 from encrypted_json_fields.fields import EncryptedJSONField
+from django.contrib.postgres.fields import ArrayField
 
 
 from .types import VectorStoreTypes, VectorStoreMetrics
@@ -84,8 +85,7 @@ class VectorStore(TimestampUserModel):
             else:
                 client.update_store(self)
         except Exception as e:
-            raise VectorStoreStoreError(
-                message=f"Vector store {self.code} can't be saved correctly. "
+            raise VectorStoreStoreError(f"Vector store {self.code} can't be saved correctly. "
                 "There was an error while interacting with the vector store backend: {e}"
             )
         super().save(*args, **kwargs)
@@ -99,8 +99,7 @@ class VectorStore(TimestampUserModel):
             try:
                 client.delete_store(self)
             except Exception as e:
-                raise VectorStoreStoreError(
-                    message=f"Vector store {self.code} can't be deleted correctly. "
+                raise VectorStoreStoreError(f"Vector store {self.code} can't be deleted correctly. "
                     "There was an error while interacting with the vector store backend: {e}"
                 )
         super().delete(*args, **kwargs)
@@ -132,7 +131,6 @@ class Document(TimestampModel):
             self.name = self.file.name
         super().save(*args, **kwargs)
   
-        
 
 
 class VectorDocument(TimestampModel):
@@ -147,6 +145,21 @@ class VectorDocument(TimestampModel):
     
     hash = models.CharField(max_length=16, null=True, blank=True, default=None)
     
+    embedding_ids = ArrayField(models.CharField(max_length=32), null=True, blank=True, default=None)
+    
     def __str__(self):
         return f"{self.store.name} - {self.hash}"
+    
+    def delete(self, *args, **kwargs):
+        try:
+            if self.embedding_ids:
+                self.store.backend.db_client.delete_documents(self.store, self.embedding_ids)
+        except Exception as e:
+            message = f"Vector store {self.store.code} can't be deleted correctly. "
+            
+            raise VectorStoreStoreError( f"VectorDocument with hash {self.hash} in vector store {self.store.code} can't be deleted correctly. "
+                f"There was an error while interacting with the vector store backend: {str(e)}"
+            )
+        super().delete(*args, **kwargs)
+        
     

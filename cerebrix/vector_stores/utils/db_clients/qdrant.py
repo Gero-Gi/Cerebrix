@@ -63,12 +63,13 @@ class CerebrixQdrantClient(BaseVectorDbClient):
     def delete_store(self, store: "VectorStore"):
         self.client.delete_collection(store.code)
 
-    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None):
+    def store_documents(self, store: "VectorStore", documents: list[LangchainDocument], payloads: list[str] = None) -> list[str]:
         qdrant_store = QdrantVectorStore(
             client=self.client,
             collection_name=store.code,
             embedding=store.get_embedding_model().model
         )
+      
         ids = qdrant_store.add_documents(documents)
         if payloads:
             update_operations = [
@@ -87,3 +88,8 @@ class CerebrixQdrantClient(BaseVectorDbClient):
             )
         return ids
             
+    def delete_documents(self, store: "VectorStore", ids: list[str]):
+        self.client.delete(
+            collection_name=store.code,
+            points_selector=models.PointIdsList(points=ids)
+        )
