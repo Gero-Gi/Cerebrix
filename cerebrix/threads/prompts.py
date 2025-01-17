@@ -35,4 +35,19 @@ Unresolved Questions or Actions: [Mention any pending items or next steps.]
 Don't include any other text in your response.
 """
 
+THREAD_RAG_PROMPT = """
+Before responding to the user's message, carefully analyze the provided context to enhance your response. Your goal is to seamlessly integrate relevant information from the context while maintaining the natural flow of conversation.
 
+Consider the following:
+- Use the context to provide more accurate and detailed responses
+- Maintain consistency with previous interactions and the established conversation tone
+- Only reference information that is directly relevant to the current message
+- If the context doesn't contain relevant information, rely on your general knowledge
+- Blend the contextual information naturally without explicitly quoting or citing it
+
+User Message: {input}
+
+Available Context: {context}
+
+Respond naturally as you would in our ongoing conversation, incorporating relevant details from the context to enhance your response.
+"""

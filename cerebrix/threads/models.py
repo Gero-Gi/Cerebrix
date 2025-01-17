@@ -28,13 +28,40 @@ class ThreadBackend(TimestampUserModel):
     memory_size = models.SmallIntegerField(default=0)
     # number of messages to keep in short term memory -> the last messages to be sent to the model
     short_term_memory_size = models.SmallIntegerField(default=20)
+    
+    rag_backend = models.ForeignKey(
+        "threads.RAGBackend", on_delete=models.SET_NULL, null=True
+    )
 
     def __str__(self):
         return self.name
-    
+
     @property
     def memory_size_tokens(self):
         return self.memory_size / 100 * self.chat_model.context_window
+    
+
+class RAGBackend(TimestampModel):
+    """
+    Settings for the RAG pipeline.
+    """
+    code = models.CharField(max_length=255, unique=True)
+    
+    vector_store = models.ForeignKey(
+        "vector_stores.VectorStore", on_delete=models.SET_NULL, null=True
+    )
+    # subset of vector documents to be used in the RAG pipeline. 
+    # If empty, all the documents allowed in the vector store will be used
+    vector_documents = models.ManyToManyField(
+        "vector_stores.VectorDocument", related_name="rag_settings", blank=True
+    )
+    # allow users to upload documents to the vector store
+    # this settings also make all the documents uploaded by the user to 
+    # be used in the RAG pipeline even if not in the vector_documents field
+    allow_upload_documents = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.code}"
 
 
 class Thread(TimestampModel):
@@ -52,7 +79,12 @@ class Thread(TimestampModel):
     system_message = models.TextField(blank=True, null=True)
 
     name = models.CharField(max_length=255, blank=True, null=True)
-
+    
+    # subset of vector documents to be used in the RAG pipeline. 
+    # If empty, all the documents allowed in the backend will be used
+    vector_documents = models.ManyToManyField(
+        "vector_stores.VectorDocument", related_name="threads", blank=True
+    )
 
     objects = ThreadManager()
 
@@ -91,14 +123,13 @@ class ThreadMessage(TimestampModel):
     # content + memory + prompt + rag + ...
     # this value is taken from the ChatModelResponse object
     total_tokens = models.IntegerField(default=0)
-    # NOTE: these values are equal when the role is ASSISTANT since the content is the response 
+    # NOTE: these values are equal when the role is ASSISTANT since the content is the response
     # of the model without any additional info
-    
 
     objects = ThreadMessageManager()
-    
+
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.get_role_display()} - {self.created_at}"
@@ -121,13 +152,21 @@ class ThreadMessage(TimestampModel):
 
     def set_content_value(self, value):
         self.content = {"value": value}
-        
+
     def get_message(self):
         if self.role == MessageRole.HUMAN:
-            return HumanMessage(content=self.content_value, content_tokens=self.content_tokens)
+            return HumanMessage(
+                content=self.content_value, content_tokens=self.content_tokens
+            )
         elif self.role == MessageRole.AI:
-            return AIMessage(content=self.content_value, content_tokens=self.content_tokens)
+            return AIMessage(
+                content=self.content_value, content_tokens=self.content_tokens
+            )
         elif self.role == MessageRole.SYSTEM:
-            return SystemMessage(content=self.content_value, content_tokens=self.content_tokens)
+            return SystemMessage(
+                content=self.content_value, content_tokens=self.content_tokens
+            )
         elif self.role == MessageRole.SUMMARIZER:
-            return SystemMessage(content=self.content_value, content_tokens=self.content_tokens)
+            return SystemMessage(
+                content=self.content_value, content_tokens=self.content_tokens
+            )

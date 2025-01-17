@@ -9,6 +9,7 @@ from .types import (
     MessageContentType,
     MemoryType,
 )
+from threads.prompts import THREAD_RAG_PROMPT
 from common.utils import get_input_tokens, get_output_tokens
 from threads.utils.memory import get_basic_memory, get_simple_memory
 from threads.exceptions import TokenLimitExceededError
@@ -91,10 +92,9 @@ class ThreadService:
             [
                 ("system", last_system_message.content_value),
                 MessagesPlaceholder(variable_name="memory"),
-                ("human", "{input}"),
+                self._get_prompt(message)
             ]
         )
-        print(chat_prompt.format(input=message, memory=memory))
         runnable = chat_prompt | self.thread.backend.chat_model.get_chat_model()
 
         message_tokens = self.thread.backend.chat_model.count_tokens(
@@ -134,7 +134,21 @@ class ThreadService:
 
         except Exception as e:
             raise e
-
+        
+    def _get_prompt(self, input: str) -> tuple:
+        if not self.thread.backend.rag_backend:
+            return ('human', {input})
+        
+        retriever = self.thread.backend.rag_backend.get_retriever()
+        context = retriever.invoke(input)
+        context_str = "\n".join([doc.page_content for doc in context])
+        
+        return ("human", THREAD_RAG_PROMPT.format(
+            context=context_str
+        ))
+        
+        
+    
     @staticmethod
     def create_thread(backend: ThreadBackend, **kwargs: dict):
         Thread.objects.create(backend=backend, **kwargs)

@@ -93,3 +93,10 @@ class CerebrixQdrantClient(BaseVectorDbClient):
             collection_name=store.code,
             points_selector=models.PointIdsList(points=ids)
         )
+
+    def get_retriever(self, store: VectorStore, **kwargs):
+        return QdrantVectorStore(
+            client=self.client,
+            collection_name=store.code,
+            embedding=store.get_embedding_model().model
+        ).as_retriever()

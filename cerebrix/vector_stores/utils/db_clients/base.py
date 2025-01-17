@@ -57,4 +57,8 @@ class BaseVectorDbClient:
             return validated
         except ValidationError as e:
             raise VectorStoreValidationError(message=str(e))
+        
+    def get_retriever(self, store: VectorStore, **kwargs):
+        """ This method should return a retriever for the vector store """
+        pass
 
